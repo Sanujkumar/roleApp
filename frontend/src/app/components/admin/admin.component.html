@@ -1,0 +1,255 @@
+<div class="min-h-screen bg-slate-950">
+  <app-navbar></app-navbar>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 fade-enter">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+            ADMIN
+          </span>
+        </div>
+        <h1 class="text-2xl font-display font-bold text-white">User Management</h1>
+        <p class="text-slate-400 font-body text-sm mt-1">Manage users, roles and permissions</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="loadUsers()" [disabled]="loading" class="btn-secondary">
+          <svg class="w-4 h-4" [class.animate-spin]="loading" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh
+        </button>
+        <button (click)="openAddModal()" class="btn-primary">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add User
+        </button>
+      </div>
+    </div>
+
+    <!-- Success toast -->
+    <div *ngIf="successMessage"
+         class="mb-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-5 py-3 flex items-center gap-3">
+      <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <p class="text-emerald-400 text-sm font-body">{{ successMessage }}</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading"
+         class="mb-4 bg-red-500/10 border border-red-500/30 rounded-lg px-5 py-3 flex items-center gap-3">
+      <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-red-400 text-sm font-body">{{ error }}</p>
+    </div>
+
+    <!-- Users table -->
+    <div class="card overflow-hidden">
+      <!-- Loading -->
+      <div *ngIf="loading" class="py-20 flex flex-col items-center gap-4">
+        <div class="spinner spinner-lg"></div>
+        <p class="text-slate-400 font-body text-sm">Loading users...</p>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!loading && users.length === 0" class="py-20 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <p class="text-slate-400 font-body mb-4">No users found</p>
+        <button (click)="openAddModal()" class="btn-primary mx-auto">Add first user</button>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!loading && users.length > 0" class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="border-b border-slate-800">
+            <tr>
+              <th class="table-header text-left px-6 py-4">User</th>
+              <th class="table-header text-left px-6 py-4">Email</th>
+              <th class="table-header text-left px-6 py-4">Role</th>
+              <th class="table-header text-left px-6 py-4">Records</th>
+              <th class="table-header text-left px-6 py-4">Joined</th>
+              <th class="table-header text-right px-6 py-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            <tr *ngFor="let user of users"
+                class="hover:bg-slate-800/30 transition-colors duration-150">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center font-display font-bold text-sm flex-shrink-0"
+                       [class]="user.role === 'ADMIN'
+                         ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                         : 'bg-violet-500/20 text-violet-400 border border-violet-500/30'">
+                    {{ user.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="text-slate-200 font-body font-medium text-sm">{{ user.name }}</p>
+                    <p class="text-slate-500 font-mono text-xs">#{{ user.id }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-slate-400 font-body text-sm">{{ user.email }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="getRoleBadge(user.role)">{{ user.role }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-slate-400 font-mono text-sm">{{ user._count?.records ?? 0 }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-slate-500 font-mono text-xs">{{ formatDate(user.createdAt) }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                  <!-- Edit -->
+                  <button (click)="openEditModal(user)"
+                          class="text-slate-400 hover:text-violet-400 p-1.5 rounded-lg hover:bg-violet-500/10 transition-all duration-200"
+                          title="Edit user">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <!-- Delete -->
+                  <button (click)="deleteUser(user.id)"
+                          [disabled]="deletingId === user.id"
+                          class="btn-danger text-xs px-3 py-1.5">
+                    <span *ngIf="deletingId === user.id" class="spinner" style="width:12px;height:12px;border-width:2px"></span>
+                    <svg *ngIf="deletingId !== user.id" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer count -->
+      <div *ngIf="!loading && users.length > 0"
+           class="px-6 py-3 border-t border-slate-800 flex items-center justify-between">
+        <p class="text-xs font-mono text-slate-500">
+          {{ users.length }} user{{ users.length !== 1 ? 's' : '' }} total
+        </p>
+        <div class="flex items-center gap-3 text-xs font-mono">
+          <span class="text-amber-400">{{ users | adminCount }} admin</span>
+          <span class="text-slate-600">·</span>
+          <span class="text-slate-400">{{ users.length - (users | adminCount) }} user</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── ADD USER MODAL ─────────────────────────────────── -->
+<div *ngIf="showAddModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     (click)="closeModals()">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative card w-full max-w-md p-6 shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-display font-bold text-white">Add New User</h3>
+      <button (click)="closeModals()" class="text-slate-500 hover:text-slate-300 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="addForm" (ngSubmit)="submitAdd()" class="space-y-4">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+        <input type="text" formControlName="name" placeholder="Jane Doe" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Email</label>
+        <input type="email" formControlName="email" placeholder="jane@example.com" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+        <input type="password" formControlName="password" placeholder="Min. 6 characters" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Role</label>
+        <select formControlName="role" class="input-field">
+          <option value="USER">USER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
+
+      <div *ngIf="modalError" class="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
+        <p class="text-red-400 text-sm font-body">{{ modalError }}</p>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="button" (click)="closeModals()" class="btn-secondary flex-1 justify-center">Cancel</button>
+        <button type="submit" [disabled]="addForm.invalid || modalLoading" class="btn-primary flex-1 justify-center">
+          <span *ngIf="modalLoading" class="spinner"></span>
+          {{ modalLoading ? 'Creating...' : 'Create User' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── EDIT USER MODAL ────────────────────────────────── -->
+<div *ngIf="showEditModal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     (click)="closeModals()">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative card w-full max-w-md p-6 shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-display font-bold text-white">Edit User</h3>
+      <button (click)="closeModals()" class="text-slate-500 hover:text-slate-300 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="space-y-4">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+        <input type="text" formControlName="name" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Email</label>
+        <input type="email" formControlName="email" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-400 uppercase tracking-wider mb-2">Role</label>
+        <select formControlName="role" class="input-field">
+          <option value="USER">USER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
+
+      <div *ngIf="modalError" class="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
+        <p class="text-red-400 text-sm font-body">{{ modalError }}</p>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="button" (click)="closeModals()" class="btn-secondary flex-1 justify-center">Cancel</button>
+        <button type="submit" [disabled]="editForm.invalid || modalLoading" class="btn-primary flex-1 justify-center">
+          <span *ngIf="modalLoading" class="spinner"></span>
+          {{ modalLoading ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
